@@ -24,7 +24,6 @@ import com.google.android.gms.tasks.OnSuccessListener;
 public class LoadingActivity extends AppCompatActivity {
     // to check color schemes https://m3.material.io/theme-builder#/custom
     ActivityLoadingBinding binding;
-    private FusedLocationProviderClient fusedLocationProviderClient;
     private static final int FINE_LOCATION_PERMISSION_CODE = 100;
     private static final int COARSE_LOCATION_PERMISSION_CODE = 101;
     private final String TAG = "LoadingActivity";
@@ -37,7 +36,7 @@ public class LoadingActivity extends AppCompatActivity {
         binding = ActivityLoadingBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        Glide.with(this).load(R.drawable.sunshine).into(binding.appLogo);
+        Glide.with(LoadingActivity.this).load(R.drawable.sunshine).into(binding.appLogo);
 
         startProgressBar();
         startPermissionRequest();
@@ -46,6 +45,7 @@ public class LoadingActivity extends AppCompatActivity {
     public void checkPermission(String permission, int requestCode) {
         if (ActivityCompat.checkSelfPermission(LoadingActivity.this, permission) == PackageManager.PERMISSION_DENIED) {
             // Requesting the permission
+            Log.d(TAG, "Request permission: " + permission + "\n" + "Request code: " + requestCode);
             ActivityCompat.requestPermissions(LoadingActivity.this, new String[]{permission}, requestCode);
         } else {
             Toast.makeText(LoadingActivity.this, "Permission already granted", Toast.LENGTH_SHORT).show();
@@ -55,21 +55,33 @@ public class LoadingActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case FINE_LOCATION_PERMISSION_CODE:
-            case COARSE_LOCATION_PERMISSION_CODE: {
-                boolean isPermissionGranted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                if (isPermissionGranted) {
-                    Toast.makeText(LoadingActivity.this, "Request permission GRANTED", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(LoadingActivity.this, "Request permission DENIED", Toast.LENGTH_SHORT).show();
-                }
+        boolean isPermissionGranted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+        if (requestCode == FINE_LOCATION_PERMISSION_CODE) {
+            if (isPermissionGranted){
+                Toast.makeText(LoadingActivity.this, "Fine Location Permission Granted",
+                        Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "Fine Location Permission Granted");
+            } else {
+                Toast.makeText(LoadingActivity.this, "Fine Location Permission Denied",
+                        Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "Fine Location Permission Denied");
+
+            }
+        } else if (requestCode == COARSE_LOCATION_PERMISSION_CODE) {
+            if (isPermissionGranted) {
+                Toast.makeText(LoadingActivity.this, "Coarse Location Permission Granted",
+                        Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "Coarse Location Permission Granted");
+            } else {
+                Toast.makeText(LoadingActivity.this, "Coarse Location Permission Denied",
+                        Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "Coarse Location Permission Denied");
             }
         }
     }
 
     private void startPermissionRequest() {
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        FusedLocationProviderClient fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(LoadingActivity.this);
 
         checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, FINE_LOCATION_PERMISSION_CODE);
         checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION, COARSE_LOCATION_PERMISSION_CODE);
@@ -80,12 +92,13 @@ public class LoadingActivity extends AppCompatActivity {
                 if (location != null) {
                     latitude = location.getLatitude();
                     longitude = location.getLongitude();
+                    Log.d(TAG, "SUCCESS trying to get last GPS location");
                 }
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                Log.d(TAG, "Error trying to get last GPS location");
+                Log.d(TAG, "ERROR trying to get last GPS location");
                 e.printStackTrace();
             }
         });
@@ -99,6 +112,8 @@ public class LoadingActivity extends AppCompatActivity {
 
     private void startMainActivity() {
         Intent i = new Intent(LoadingActivity.this, MainActivity.class);
+        i.putExtra("LATITUDE", String.valueOf(latitude));
+        i.putExtra("LONGITUDE", String.valueOf(longitude));
         startActivity(i);
     }
 

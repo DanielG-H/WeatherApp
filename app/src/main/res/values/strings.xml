@@ -1,7 +1,13 @@
 <resources>
+    <!-- loading activity -->
     <string name="app_name">Weather App</string>
     <string name="placeholder_description">Image</string>
 
+    <!-- main activity -->
+    <string name="location">Location</string>
+    <string name="minTemp">%1$s \u2103</string>
+    <string name="currTemp">%1$s \u2103</string>
+    <string name="maxTemp">%1$s \u2103</string>
 
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

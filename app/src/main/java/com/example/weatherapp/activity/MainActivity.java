@@ -8,6 +8,8 @@ import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.bumptech.glide.Glide;
+import com.example.weatherapp.R;
 import com.example.weatherapp.databinding.ActivityMainBinding;
 import com.example.weatherapp.network.Network;
 
@@ -33,8 +35,11 @@ public class MainActivity extends AppCompatActivity {
         String currentLocation = intent.getStringExtra("LATITUDE") + "," + intent.getStringExtra("LONGITUDE");
         Log.d(TAG, currentLocation);
 
+        String url = Network.openWeatherAPI + "forecast.json?key=" + Network.openWeatherAPIKey + "&q="
+                + currentLocation + "&days=1&aqi=no&alerts=no";
         final OkHttpClient client = new OkHttpClient();
-        final Request request = new Request.Builder().url(Network.openWeatherAPI + "current.json?key=" + Network.openWeatherAPIKey).build();
+        final Request request = new Request.Builder().url(url).build();
+        Log.d(TAG, url);
 
         createAsyncTask(client, request);
     }
@@ -63,8 +68,31 @@ public class MainActivity extends AppCompatActivity {
                     JSONObject jsonResponse;
                     try {
                         jsonResponse = new JSONObject(s);
-                        JSONObject locationObject = jsonResponse.getJSONObject("location");
-                        binding.currentLocationTv.setText(locationObject.getString("name"));
+
+                        // get JSON object with key
+                        JSONObject locationObj = jsonResponse.getJSONObject("location");
+                        JSONObject currentObj = jsonResponse.getJSONObject("current");
+
+                        // get forecast object, forecast days array and get day
+                        JSONObject dayObj = jsonResponse.getJSONObject("forecast").getJSONArray("forecastday").getJSONObject(0).getJSONObject("day");
+
+                        // get icon from object condition inside object current
+                        String icon = currentObj.getJSONObject("condition").getString("icon");
+
+                        // get string values from JSON
+                        String name = locationObj.getString("name");
+                        String region = locationObj.getString("region");
+                        String country = locationObj.getString("country");
+                        String completeLocation = name + "/" + region + "/" + country;
+
+                        // set image placeholder to weather icon
+                        Glide.with(MainActivity.this).load("https:" + icon).into(binding.weatherImage);
+
+                        binding.currentLocation.setText(completeLocation);
+                        binding.minimumTemperature.setText(getString(R.string.minTemp, currentObj.getString("mintemp_c")));
+                        binding.currentTemperature.setText(getString(R.string.currTemp, currentObj.getString("temp_c")));
+                        binding.maximumTemperature.setText(getString(R.string.maxTemp, currentObj.getString("maxtemp_c")));
+
                     } catch (JSONException e) {
                         throw new RuntimeException(e);
                     }
